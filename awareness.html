@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PhishGuard — Awareness Email</title>
+<link rel="stylesheet" href="phishguard.css" />
+<style>
+  .email-canvas {
+    max-width: 680px; margin: 32px auto; padding: 0 20px 40px;
+  }
+  .page-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; }
+  .email-outer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .email-header {
+    background: #4169E1;
+    padding: 20px 28px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .email-logo {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-family: Georgia, serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+  .email-header-text { font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.7; }
+  .email-header-text strong { color: #fff; font-size: 13px; font-weight: 600; display: block; }
+  .email-body { padding: 28px; }
+  .email-meta { width: 100%; font-size: 12px; color: #6B7280; margin-bottom: 20px; border-collapse: collapse; }
+  .email-meta td { padding: 3px 0; }
+  .email-meta .meta-label { color: #9CA3AF; width: 64px; font-weight: 500; }
+  .email-meta .meta-subject { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+  .email-divider { border: none; border-top: 1px solid var(--border); margin: 0 0 20px; }
+  .email-p { margin: 0 0 14px; line-height: 1.75; font-size: 14px; color: var(--text-primary); }
+  .phish-example {
+    background: #FFF5F5;
+    border-left: 3px solid #4169E1;
+    padding: 14px 16px;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin: 0 0 18px;
+  }
+  .phish-example-label { font-weight: 600; font-size: 13px; color: #4169E1; margin-bottom: 6px; }
+  .phish-example-line { font-family: 'Courier New', monospace; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .phish-example-note { font-size: 12px; color: var(--text-muted); }
+  .flags-grid { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+  .flags-grid td {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+    width: 33.3%;
+    background: #F9FAFB;
+  }
+  .flag-title { font-weight: 600; font-size: 12px; color: #4169E1; margin-bottom: 5px; }
+  .flag-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .action-box {
+    background: #F9FAFB;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    margin-bottom: 18px;
+  }
+  .action-title { font-weight: 600; font-size: 13px; color: var(--text-primary); margin-bottom: 10px; }
+  .action-list { margin: 0; padding-left: 20px; }
+  .action-list li { font-size: 13px; color: var(--text-secondary); line-height: 2.2; }
+  .email-footer { border-top: 1px solid var(--border); padding-top: 16px; font-size: 12px; color: var(--text-muted); }
+  .email-footer strong { color: var(--text-secondary); }
+
+  .toolbar {
+    display: flex; gap: 10px; align-items: center;
+    background: #F3F4F6; border: 1px solid var(--border);
+    border-bottom: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 10px 16px; font-size: 13px; color: var(--text-secondary);
+  }
+  .toolbar-btn {
+    padding: 5px 12px; font-size: 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--surface);
+    cursor: pointer; color: var(--text-secondary); transition: background 0.12s;
+  }
+  .toolbar-btn:hover { background: #E5E7EB; }
+  .toolbar-spacer { flex: 1; }
+  .toolbar-label { font-size: 12px; color: var(--text-muted); }
+  .copy-notice { display:none; font-size:12px; color: #16a34a; }
+</style>
+</head>
+<body>
+
+<nav class="pg-nav">
+  <a class="pg-nav-logo" href="index.html">PHISHGUARD</a>
+  <div class="pg-nav-links">
+    <a class="pg-nav-link" href="index.html">Home</a>
+    <a class="pg-nav-link" href="quiz.html">Quiz</a>
+    <a class="pg-nav-link active" href="awareness.html">Awareness</a>
+    <a class="pg-nav-link" href="dashboard.html">Dashboard</a>
+  </div>
+  <span class="pg-nav-badge">GBP 2026</span>
+</nav>
+
+<div class="email-canvas">
+  <div class="page-title">&#128140; Campaign awareness email — ready to send</div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">PhishGuard_Awareness_Email_2026.html</span>
+    <div class="toolbar-spacer"></div>
+    <button class="toolbar-btn" onclick="window.print()">&#128438; Print</button>
+    <button class="toolbar-btn" onclick="copyEmail()">&#128203; Copy HTML</button>
+    <span class="copy-notice" id="copy-notice">&#10003; Copied!</span>
+  </div>
+
+  <div class="email-outer" id="email-content">
+    <div class="email-header">
+      <div class="email-logo">PHISHGUARD</div>
+      <div class="email-header-text">
+        <strong>George Brown Polytechnic</strong>
+        IT Security Awareness Program · 2026
+      </div>
+    </div>
+
+    <div class="email-body">
+      <table class="email-meta">
+        <tr>
+          <td class="meta-label">FROM</td>
+          <td>IT Security Team &lt;security@georgebrown.ca&gt;</td>
+        </tr>
+        <tr>
+          <td class="meta-label">TO</td>
+          <td>All GBP Faculty, Staff &amp; Students</td>
+        </tr>
+        <tr>
+          <td class="meta-label">SUBJECT</td>
+          <td class="meta-subject">&#9888;&#65039; Action Required: Protect Your GBP Account from Phishing Attacks</td>
+        </tr>
+      </table>
+
+      <hr class="email-divider" />
+
+      <p class="email-p">Dear GBP Community,</p>
+
+      <p class="email-p">Phishing attacks targeting post-secondary institutions are at an all-time high. Attackers are sending fake emails that appear to come from college administration, IT Support, or Brightspace — designed to steal your credentials or trick you into authorizing fraudulent transactions.</p>
+
+      <div class="phish-example">
+        <div class="phish-example-label">&#127907; Real example of a phishing subject line circulating on campus:</div>
+        <div class="phish-example-line">"Urgent: Your GBP account will be suspended — verify now"</div>
+        <div class="phish-example-note">This is a fake. GBP IT will never threaten account suspension via email without prior notice.</div>
+      </div>
+
+      <p class="email-p" style="font-weight:600; font-size:13px;">How to spot a phishing email — check for these 3 red flags:</p>
+
+      <table class="flags-grid">
+        <tr>
+          <td>
+            <div class="flag-title">1. Suspicious sender</div>
+            <div class="flag-desc">Check the full email address — not just the display name. Attackers use domains like <code style="font-family:monospace; font-size:11px;">gbp-support@gmail.com</code>.</div>
+          </td>
+          <td>
+            <div class="flag-title">2. Urgency &amp; pressure</div>
+            <div class="flag-desc">Legitimate IT requests never demand immediate action or threaten penalties within hours.</div>
+          </td>
+          <td>
+            <div class="flag-title">3. Suspicious links</div>
+            <div class="flag-desc">Hover over links before clicking. Real GBP links end in <code style="font-family:monospace; font-size:11px;">georgebrown.ca</code> — nothing else.</div>
+          </td>
+        </tr>
+      </table>
+
+      <div class="action-box">
+        <div class="action-title">What to do if you receive a suspicious email:</div>
+        <ol class="action-list">
+          <li>Do <strong>not</strong> click any links or open attachments.</li>
+          <li>Click the <strong>Report Phishing</strong> button in Outlook — it's in your toolbar.</li>
+          <li>Or forward it directly to <strong>security@georgebrown.ca</strong>.</li>
+        </ol>
+      </div>
+
+      <p class="email-p">As part of the PhishGuard program, you may receive <strong>simulated phishing emails</strong> in the coming weeks. These are safe training exercises — if you click one, you'll see a short tip explaining what to look for. No one will be penalized.</p>
+
+      <p class="email-p">Want to test your phishing awareness right now? Take the <strong><a href="quiz.html" style="color:#4169E1;">PhishGuard quiz</a></strong> — it takes about 5 minutes.</p>
+
+      <p class="email-p" style="margin-bottom:20px;">Phishing attacks succeed because of habit. PhishGuard builds a better one.</p>
+
+      <div class="email-footer">
+        <strong>GBP IT Security Team</strong><br>
+        <a href="mailto:security@georgebrown.ca" style="color:#4169E1; text-decoration:none;">security@georgebrown.ca</a> &middot;
+        <a href="https://georgebrown.ca/itsecurity" style="color:#4169E1; text-decoration:none;">georgebrown.ca/itsecurity</a><br>
+        <span style="margin-top:6px; display:block;">This message was sent to all active GBP accounts as part of the PhishGuard 2026 Awareness Program.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usage notes -->
+  <div class="card" style="margin-top:20px;">
+    <div class="section-title" style="margin-bottom:8px; font-size:15px;">&#128221; Deployment notes</div>
+    <div style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
+      <strong style="color:var(--text-primary);">Send via:</strong> GBP mass email system (Outlook/Exchange distribution lists)<br>
+      <strong style="color:var(--text-primary);">Target lists:</strong> all-staff@georgebrown.ca, all-faculty@georgebrown.ca, all-students@georgebrown.ca<br>
+      <strong style="color:var(--text-primary);">Recommended send time:</strong> Tuesday or Wednesday, 9–11 AM (higher open rates)<br>
+      <strong style="color:var(--text-primary);">Follow-up:</strong> Send again 4 weeks later with updated quiz link and simulation notice<br>
+      <strong style="color:var(--text-primary);">KPI tracked:</strong> Email open rate, click-through to quiz, simulation response rates
+    </div>
+  </div>
+</div>
+
+<div class="pg-footer">
+  <strong>PhishGuard 2026</strong> · George Brown Polytechnic · COMP 4066 Group 2 ·
+  <a href="mailto:security@georgebrown.ca" style="color:var(--brand); text-decoration:none;">security@georgebrown.ca</a>
+</div>
+
+<script>
+function copyEmail() {
+  const el = document.getElementById('email-content');
+  const html = el.outerHTML;
+  navigator.clipboard.writeText(html).then(() => {
+    const notice = document.getElementById('copy-notice');
+    notice.style.display = 'inline';
+    setTimeout(() => { notice.style.display = 'none'; }, 2500);
+  });
+}
+</script>
+</body>
+</html>

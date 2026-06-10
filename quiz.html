@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PhishGuard Quiz — George Brown Polytechnic</title>
+<link rel="stylesheet" href="phishguard.css" />
+<style>
+  .quiz-layout { max-width: 680px; margin: 0 auto; padding: 32px 20px; }
+
+  /* Name screen */
+  .name-screen { text-align: center; padding: 48px 24px; }
+  .name-screen .big-icon { font-size: 56px; margin-bottom: 20px; display: block; }
+  .name-screen h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  .name-screen p { font-size: 15px; color: var(--text-secondary); max-width: 440px; margin: 0 auto 28px; line-height: 1.7; }
+  .name-input {
+    width: 100%; max-width: 340px;
+    padding: 11px 16px;
+    font-size: 15px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-primary);
+    display: block; margin: 0 auto 16px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .name-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(65,105,225,0.1); }
+
+  /* Quiz header stats */
+  .quiz-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .qs-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; text-align: center; }
+  .qs-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .qs-val { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+  .qs-val.brand { color: var(--brand); }
+  .qs-val.success { color: #16a34a; }
+
+  /* Progress */
+  .prog-wrap { margin-bottom: 20px; }
+  .prog-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+
+  /* Question card */
+  .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .q-cat { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--brand); background: var(--brand-light); border-radius: 99px; padding: 3px 12px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .q-text { font-size: 16px; font-weight: 500; color: var(--text-primary); line-height: 1.6; margin-bottom: 14px; }
+  .q-scenario {
+    background: #F8FAFF;
+    border-left: 3px solid var(--brand);
+    padding: 12px 16px;
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom: 18px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    text-align: left;
+    transition: background 0.12s, border-color 0.12s;
+    width: 100%;
+  }
+  .opt:hover:not(:disabled) { background: var(--brand-light); border-color: var(--brand); }
+  .opt-letter {
+    width: 24px; height: 24px; min-width: 24px;
+    border-radius: 50%;
+    background: #F3F4F6;
+    color: var(--text-secondary);
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .opt.correct { background: var(--success-bg); border-color: #86efac; color: var(--success-text); }
+  .opt.correct .opt-letter { background: #16a34a; color: #fff; }
+  .opt.wrong { background: var(--danger-bg); border-color: #fca5a5; color: var(--danger-text); }
+  .opt.wrong .opt-letter { background: #dc2626; color: #fff; }
+  .opt.reveal { background: var(--success-bg); border-color: #86efac; color: var(--success-text); opacity: 0.65; }
+  .opt.reveal .opt-letter { background: #16a34a; color: #fff; }
+  .opt:disabled { cursor: default; }
+
+  /* Feedback */
+  .feedback { border-radius: var(--radius-md); padding: 14px 16px; margin-top: 14px; font-size: 14px; line-height: 1.6; display: none; }
+  .feedback.success { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+  .feedback.danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+
+  /* Next button */
+  .next-btn {
+    width: 100%; padding: 14px;
+    background: var(--brand); color: #fff;
+    border: none; border-radius: var(--radius-md);
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; display: none;
+    margin-top: 12px;
+    transition: background 0.15s;
+  }
+  .next-btn:hover { background: var(--brand-dark); }
+
+  /* Results */
+  .results-wrap { display: none; }
+  .results-hero { text-align: center; padding: 32px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; box-shadow: var(--shadow); }
+  .score-ring { width: 100px; height: 100px; border-radius: 50%; background: var(--brand-light); border: 4px solid var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; flex-direction: column; }
+  .score-big { font-size: 28px; font-weight: 700; color: var(--brand); line-height: 1; }
+  .score-denom { font-size: 13px; color: var(--text-muted); }
+  .results-label { font-size: 16px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px; }
+  .results-sublabel { font-size: 14px; color: var(--text-secondary); }
+
+  .breakdown-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .breakdown-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+  .breakdown-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-topic { color: var(--text-secondary); }
+
+  /* Leaderboard */
+  .lb-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .lb-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-md); font-size: 14px; background: #F9FAFB; margin-bottom: 6px; }
+  .lb-row:last-child { margin-bottom: 0; }
+  .lb-row.highlight { background: var(--brand-light); border: 1px solid var(--brand-muted); }
+  .lb-rank { font-size: 12px; font-weight: 600; color: var(--text-muted); min-width: 22px; }
+  .lb-name { flex: 1; font-weight: 500; color: var(--text-primary); }
+  .lb-row.highlight .lb-name { color: var(--brand); }
+  .lb-date { font-size: 12px; color: var(--text-muted); }
+  .lb-score { font-weight: 600; color: var(--brand); }
+</style>
+</head>
+<body>
+
+<nav class="pg-nav">
+  <a class="pg-nav-logo" href="index.html">PHISHGUARD</a>
+  <div class="pg-nav-links">
+    <a class="pg-nav-link" href="index.html">Home</a>
+    <a class="pg-nav-link active" href="quiz.html">Quiz</a>
+    <a class="pg-nav-link" href="awareness.html">Awareness</a>
+    <a class="pg-nav-link" href="dashboard.html">Dashboard</a>
+  </div>
+  <span class="pg-nav-badge">GBP 2026</span>
+</nav>
+
+<div class="quiz-layout">
+
+  <!-- Name / Start screen -->
+  <div id="name-screen" class="name-screen">
+    <span class="big-icon">&#127907;</span>
+    <h1>PhishGuard Awareness Quiz</h1>
+    <p>8 scenario-based questions to test your phishing awareness. Your score is recorded to help track the campaign's impact — no penalties, just learning.</p>
+    <input class="name-input" id="user-name" type="text" placeholder="Your name or student/staff ID (optional)" />
+    <button class="btn btn-primary btn-lg" onclick="startQuiz()" style="margin:0 auto; display:flex;">
+      &#9654; Start quiz
+    </button>
+    <div style="margin-top:32px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:22px; font-weight:700; color:var(--brand)" id="ns-participants">0</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">participants</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:22px; font-weight:700; color:var(--brand)" id="ns-avg">—</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">avg score</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:22px; font-weight:700; color:var(--brand)">8</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">questions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz screen -->
+  <div id="quiz-screen" style="display:none;">
+    <div class="quiz-stats">
+      <div class="qs-card">
+        <div class="qs-label">Question</div>
+        <div class="qs-val brand" id="sq-num">1 / 8</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-label">Score</div>
+        <div class="qs-val success" id="sq-score">0</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-label">Total quizzed</div>
+        <div class="qs-val" id="sq-total">—</div>
+      </div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-meta">
+        <span id="prog-label">Question 1 of 8</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="q-card">
+      <div class="q-cat" id="q-cat"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-scenario" id="q-scenario" style="display:none;"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next question &#8594;</button>
+  </div>
+
+  <!-- Results screen -->
+  <div class="results-wrap" id="results-screen">
+    <div class="results-hero">
+      <div class="score-ring">
+        <span class="score-big" id="res-num">0</span>
+        <span class="score-denom" id="res-denom">/ 8</span>
+      </div>
+      <div class="results-label" id="res-label">—</div>
+      <div class="results-sublabel" id="res-pct">—</div>
+    </div>
+
+    <div class="breakdown-card">
+      <div class="breakdown-title">&#128203; Topic breakdown</div>
+      <div id="breakdown-rows"></div>
+    </div>
+
+    <div class="lb-card" id="lb-card" style="display:none;">
+      <div class="lb-title">&#127942; Recent scores</div>
+      <div id="lb-rows"></div>
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block" onclick="restartQuiz()" style="margin-bottom:8px;">
+      &#8635; Retake quiz
+    </button>
+    <a href="dashboard.html" class="btn btn-outline btn-lg btn-block">
+      &#128202; View full KPI dashboard
+    </a>
+  </div>
+
+</div>
+
+<div class="pg-footer">
+  <strong>PhishGuard 2026</strong> · George Brown Polytechnic · COMP 4066 Group 2 ·
+  <a href="mailto:security@georgebrown.ca" style="color:var(--brand); text-decoration:none;">security@georgebrown.ca</a>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    cat: "Sender identification",
+    text: "You receive an email from 'IT Support'. What should you check first?",
+    scenario: null,
+    options: [
+      "The subject line urgency",
+      "The full sender email address — not just the display name",
+      "Whether the email has attachments",
+      "If the email has the college logo"
+    ],
+    correct: 1,
+    fb_correct: "Attackers can set any display name they want. Always verify the actual email domain — real GBP IT emails end in @georgebrown.ca.",
+    fb_wrong: "The most important check is the full sender email address. Attackers fake display names like 'IT Support' while using personal Gmail or spoofed domains."
+  },
+  {
+    cat: "Urgency & pressure tactics",
+    text: "Which of these subject lines is most likely a phishing attempt?",
+    scenario: null,
+    options: [
+      "Reminder: Winter registration opens Monday",
+      "Your GBP account will be suspended in 24 hours — act now",
+      "New library resources available for Winter semester",
+      "Upcoming scheduled maintenance on Brightspace"
+    ],
+    correct: 1,
+    fb_correct: "Creating artificial urgency ('24 hours', 'act now', 'suspended') is a classic phishing tactic designed to make you act before you think.",
+    fb_wrong: "Artificial urgency is a hallmark of phishing. Real IT communications don't threaten account suspension on short notice with no prior warning."
+  },
+  {
+    cat: "Link inspection",
+    text: "Before clicking a link in an email, you hover over it. Which destination URL is safe?",
+    scenario: null,
+    options: [
+      "http://gbp-student-portal.com/login",
+      "https://georgebrown.ca.verify-account.net/login",
+      "https://my.georgebrown.ca/account",
+      "https://secure-gbp-login.ca/portal"
+    ],
+    correct: 2,
+    fb_correct: "The real domain is georgebrown.ca. Focus on the domain itself — everything before the first slash after the TLD is the path, not a subdomain.",
+    fb_wrong: "'georgebrown.ca.verify-account.net' is actually the domain verify-account.net — not georgebrown.ca. Attackers add trusted names as subdomains to fool you."
+  },
+  {
+    cat: "Business email compromise",
+    text: "You receive the following email. What are the biggest red flags?",
+    scenario: "FROM: president@george-brown.ca\nSUBJECT: Urgent — Wire Transfer Needed Today\n\nHi, I'm in an important meeting and need you to process a $4,200 wire transfer to our new vendor immediately. Don't discuss with anyone — I'll explain later. Reply ASAP.",
+    options: [
+      "The email mentions a meeting",
+      "The dollar amount seems large",
+      "Wrong domain, secrecy instruction, and artificial urgency — classic BEC pattern",
+      "It asks for a reply instead of a link click"
+    ],
+    correct: 2,
+    fb_correct: "Three red flags: wrong domain (george-brown.ca vs georgebrown.ca), the 'don't discuss with anyone' secrecy demand, and artificial urgency. This is a Business Email Compromise (BEC) attack.",
+    fb_wrong: "Key red flags: the sender domain is george-brown.ca (not georgebrown.ca), the secrecy instruction is highly suspicious, and the urgency is artificial. This is a BEC attack — one of the most costly phishing variants."
+  },
+  {
+    cat: "Credential phishing",
+    text: "You click a link and a page that looks exactly like the Brightspace login appears. What do you do?",
+    scenario: null,
+    options: [
+      "Log in — it looks completely real",
+      "Check the URL bar for the actual domain before entering any credentials",
+      "Log in but immediately change your password afterward",
+      "Close the tab — the visual similarity proves it's a phishing site"
+    ],
+    correct: 1,
+    fb_correct: "Always check the URL bar before entering credentials. A convincing visual design means nothing — phishing pages are designed to look pixel-perfect replicas of real sites.",
+    fb_wrong: "Never trust visual appearance alone. Check the URL bar — the real Brightspace is on a georgebrown.ca domain. If it's anything else, close immediately and report to security@georgebrown.ca."
+  },
+  {
+    cat: "Attachment safety",
+    text: "A colleague's email arrives with the attachment 'Updated Invoice.pdf.exe'. What is true?",
+    scenario: null,
+    options: [
+      "It's a PDF — the .pdf in the name confirms it",
+      "The real extension is .exe — this is an executable program, not a document. Do not open it.",
+      "It's safe to open if the colleague is a trusted contact",
+      "Rename it to .pdf before opening to make it safe"
+    ],
+    correct: 1,
+    fb_correct: "The actual file extension is .exe (a Windows executable), not .pdf. Attackers use double extensions to hide malicious file types. Never open unexpected .exe, .zip, or .docm files.",
+    fb_wrong: "The real extension is .exe — an executable program. The .pdf part is a decoy name. This is a common social engineering trick. Opening it could install malware on your device and the college network."
+  },
+  {
+    cat: "Reporting procedures",
+    text: "You receive a suspicious email at your georgebrown.ca account. What is the correct first action?",
+    scenario: null,
+    options: [
+      "Forward it to a colleague to get a second opinion",
+      "Delete it immediately so it can't cause harm",
+      "Do not click anything — use the Report Phishing button in Outlook or forward to security@georgebrown.ca",
+      "Reply to the sender asking if the email is legitimate"
+    ],
+    correct: 2,
+    fb_correct: "Use the Report Phishing button in Outlook or email security@georgebrown.ca. Reporting helps GBP IT protect everyone else who may receive the same attack.",
+    fb_wrong: "The correct action is to report it without engaging. Use Outlook's Report Phishing button or email security@georgebrown.ca. Never reply to a suspected phishing email — that confirms your address is active."
+  },
+  {
+    cat: "Simulation awareness",
+    text: "You clicked a link in what turned out to be a PhishGuard simulation email. What happens?",
+    scenario: null,
+    options: [
+      "Your account access gets temporarily suspended",
+      "You see a short educational tip explaining what gave it away — no penalties apply",
+      "Your manager or instructor is notified and disciplinary action begins",
+      "Nothing happens — the simulation has no follow-up"
+    ],
+    correct: 1,
+    fb_correct: "PhishGuard simulations are safe learning exercises. Clicking a simulated link shows you an educational tip about the red flags you missed. No one is penalized — building awareness is the only goal.",
+    fb_wrong: "PhishGuard simulations are learning tools, not traps. Clicking shows you an educational tip explaining what to look for next time. There are no penalties — awareness is the goal."
+  }
+];
+
+const STORAGE_KEY = "phishguard_scores";
+let current = 0, score = 0, answered = false, userName = "", results = [];
+
+function getScores() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveScore(name, sc, total) {
+  try {
+    const s = getScores();
+    s.unshift({ name: name || "Anonymous", score: sc, total, pct: Math.round((sc/total)*100), date: new Date().toLocaleDateString('en-CA') });
+    const t = s.slice(0, 50);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
+    saveTopicData();
+    return t;
+  } catch(e) { return []; }
+}
+
+function saveTopicData() {
+  try {
+    const key = 'phishguard_topic_data';
+    const raw = localStorage.getItem(key);
+    const existing = raw ? JSON.parse(raw) : QUESTIONS.map(q => ({ topic: q.cat, correct: 0, total: 0 }));
+    results.forEach((r, i) => {
+      const entry = existing.find(e => e.topic === r.cat);
+      if (entry) { entry.total++; if (r.correct) entry.correct++; }
+    });
+    const withPct = existing.map(e => ({ ...e, pct: e.total > 0 ? Math.round((e.correct / e.total) * 100) : 0 }));
+    localStorage.setItem(key, JSON.stringify(withPct));
+  } catch(e) {}
+}
+function updateHomeStats() {
+  const s = getScores();
+  const el = document.getElementById('ns-participants');
+  const avgEl = document.getElementById('ns-avg');
+  if (el) el.textContent = s.length;
+  if (avgEl && s.length > 0) {
+    const avg = s.reduce((a,b) => a + b.pct, 0) / s.length;
+    avgEl.textContent = Math.round(avg) + '%';
+  }
+}
+
+function startQuiz() {
+  userName = document.getElementById('user-name').value.trim();
+  document.getElementById('name-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  const t = getScores().length;
+  document.getElementById('sq-total').textContent = t || '—';
+  renderQ();
+}
+
+function renderQ() {
+  const q = QUESTIONS[current];
+  answered = false;
+  const pct = Math.round((current / QUESTIONS.length) * 100);
+  document.getElementById('sq-num').textContent = (current+1) + ' / ' + QUESTIONS.length;
+  document.getElementById('prog-label').textContent = 'Question ' + (current+1) + ' of ' + QUESTIONS.length;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('q-cat').textContent = q.cat;
+  document.getElementById('q-text').textContent = q.text;
+  const sc = document.getElementById('q-scenario');
+  if (q.scenario) { sc.style.display = 'block'; sc.textContent = q.scenario; } else { sc.style.display = 'none'; }
+  const letters = ['A','B','C','D'];
+  document.getElementById('options').innerHTML = q.options.map((o,i) =>
+    `<button class="opt" id="opt-${i}" onclick="pick(${i})">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${o}</span>
+    </button>`
+  ).join('');
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'none'; fb.className = 'feedback';
+  document.getElementById('next-btn').style.display = 'none';
+}
+
+function pick(idx) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[current];
+  const ok = idx === q.correct;
+  if (ok) score++;
+  results.push({ cat: q.cat, correct: ok });
+  document.getElementById('sq-score').textContent = score;
+  q.options.forEach((_,i) => {
+    const b = document.getElementById('opt-'+i);
+    b.disabled = true;
+    if (i === q.correct) b.classList.add(ok && i === idx ? 'correct' : 'reveal');
+    if (i === idx && !ok) b.classList.add('wrong');
+  });
+  if (ok) { document.getElementById('opt-'+idx).classList.remove('reveal'); document.getElementById('opt-'+idx).classList.add('correct'); }
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  fb.className = 'feedback ' + (ok ? 'success' : 'danger');
+  fb.innerHTML = '<strong>' + (ok ? '&#10003; Correct! ' : '&#10007; Not quite. ') + '</strong>' + (ok ? q.fb_correct : q.fb_wrong);
+  const nb = document.getElementById('next-btn');
+  nb.style.display = 'block';
+  nb.textContent = current < QUESTIONS.length - 1 ? 'Next question \u2192' : 'See my results \u2192';
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= QUESTIONS.length) showResults();
+  else renderQ();
+}
+
+function showResults() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('results-screen').style.display = 'block';
+  const pct = Math.round((score / QUESTIONS.length) * 100);
+  document.getElementById('res-num').textContent = score;
+  document.getElementById('res-denom').textContent = '/ ' + QUESTIONS.length;
+  let lbl = '', sub = '';
+  if (pct >= 88) { lbl = 'Excellent — you\'re phishing-aware!'; sub = 'You scored ' + pct + '%. Strong security instincts.'; }
+  else if (pct >= 63) { lbl = 'Good effort — review your missed topics.'; sub = 'You scored ' + pct + '%. A few areas to strengthen.'; }
+  else { lbl = 'Keep practicing — awareness takes time to build.'; sub = 'You scored ' + pct + '%. Review the materials and try again.'; }
+  document.getElementById('res-label').textContent = lbl;
+  document.getElementById('res-pct').textContent = sub;
+  document.getElementById('breakdown-rows').innerHTML = results.map(r =>
+    `<div class="breakdown-row">
+      <span class="breakdown-topic">${r.cat}</span>
+      <span class="badge ${r.correct ? 'badge-success' : 'badge-danger'}">${r.correct ? '&#10003; Correct' : '&#10007; Missed'}</span>
+    </div>`
+  ).join('');
+  const allScores = saveScore(userName, score, QUESTIONS.length);
+  document.getElementById('sq-total').textContent = allScores.length;
+  if (allScores.length > 0) {
+    const lb = document.getElementById('lb-card');
+    lb.style.display = 'block';
+    document.getElementById('lb-rows').innerHTML = allScores.slice(0, 10).map((s, i) => {
+      const isMe = i === 0 && s.name === (userName || 'Anonymous') && s.score === score;
+      return `<div class="lb-row ${isMe ? 'highlight' : ''}">
+        <span class="lb-rank">#${i+1}</span>
+        <span class="lb-name">${s.name}</span>
+        <span class="lb-date">${s.date}</span>
+        <span class="lb-score">${s.score}/${s.total}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+function restartQuiz() {
+  current = 0; score = 0; answered = false; results = [];
+  document.getElementById('results-screen').style.display = 'none';
+  document.getElementById('name-screen').style.display = 'block';
+  document.getElementById('user-name').value = userName;
+  updateHomeStats();
+}
+
+updateHomeStats();
+</script>
+</body>
+</html>

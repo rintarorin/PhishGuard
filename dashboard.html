@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PhishGuard — KPI Dashboard</title>
+<link rel="stylesheet" href="phishguard.css" />
+<style>
+  .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--brand);
+    border-radius: 99px 99px 0 0;
+  }
+  .kpi-card.success::before { background: #16a34a; }
+  .kpi-card.warning::before { background: #d97706; }
+  .kpi-card.danger::before { background: #dc2626; }
+  .kpi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; line-height: 1; }
+  .kpi-value.brand { color: var(--brand); }
+  .kpi-value.success { color: #16a34a; }
+  .kpi-value.warning { color: #d97706; }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); }
+  .kpi-trend { font-size: 11px; margin-top: 6px; }
+  .kpi-trend.up { color: #16a34a; }
+  .kpi-trend.down { color: #dc2626; }
+
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .chart-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+
+  /* Bar chart */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; }
+  .bar-label { font-size: 12px; color: var(--text-secondary); min-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; height: 18px; background: #F3F4F6; border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--brand); border-radius: 99px; transition: width 0.6s ease; min-width: 2px; }
+  .bar-fill.success { background: #16a34a; }
+  .bar-fill.warning { background: #d97706; }
+  .bar-fill.danger { background: #dc2626; }
+  .bar-pct { font-size: 12px; font-weight: 600; color: var(--text-secondary); min-width: 36px; text-align: right; }
+
+  /* Score distribution */
+  .dist-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; margin-bottom: 8px; }
+  .dist-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .dist-bar { width: 100%; background: var(--brand); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s ease; }
+  .dist-label { font-size: 11px; color: var(--text-muted); }
+  .dist-count { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+
+  /* Table */
+  .scores-table-wrap { overflow-x: auto; }
+  .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+
+  /* Two col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+
+  .refresh-btn { font-size: 13px; color: var(--brand); background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .last-updated { font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<nav class="pg-nav">
+  <a class="pg-nav-logo" href="index.html">PHISHGUARD</a>
+  <div class="pg-nav-links">
+    <a class="pg-nav-link" href="index.html">Home</a>
+    <a class="pg-nav-link" href="quiz.html">Quiz</a>
+    <a class="pg-nav-link" href="awareness.html">Awareness</a>
+    <a class="pg-nav-link active" href="dashboard.html">Dashboard</a>
+  </div>
+  <span class="pg-nav-badge">GBP 2026</span>
+</nav>
+
+<div class="pg-container-wide">
+
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div class="section-title">KPI Dashboard</div>
+      <div class="section-sub" style="margin-bottom:0;">Live quiz results &amp; campaign metrics — PhishGuard 2026</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="last-updated" id="last-updated">—</span>
+      <button class="refresh-btn" onclick="loadDashboard()">&#8635; Refresh</button>
+      <button class="btn btn-sm btn-outline" onclick="exportCSV()">&#8595; Export CSV</button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="dash-grid" id="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total participants</div>
+      <div class="kpi-value brand" id="kpi-total">0</div>
+      <div class="kpi-sub">quiz completions recorded</div>
+    </div>
+    <div class="kpi-card success">
+      <div class="kpi-label">Average score</div>
+      <div class="kpi-value success" id="kpi-avg">—</div>
+      <div class="kpi-sub" id="kpi-avg-sub">out of 8 questions</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pass rate (&#8805;75%)</div>
+      <div class="kpi-value brand" id="kpi-pass">—</div>
+      <div class="kpi-sub">scored 6/8 or higher</div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-label">Most missed topic</div>
+      <div class="kpi-value warning" style="font-size:16px; line-height:1.4;" id="kpi-weak">—</div>
+      <div class="kpi-sub">needs focus in training</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Topic performance -->
+    <div class="chart-wrap">
+      <div class="chart-title">Topic performance</div>
+      <div class="chart-sub">% of participants answering each topic correctly</div>
+      <div class="bar-chart" id="topic-bars">
+        <div class="empty-state"><span class="empty-icon">&#128202;</span>No quiz data yet.<br>Take the <a href="quiz.html" style="color:var(--brand);">quiz</a> to start tracking.</div>
+      </div>
+    </div>
+
+    <!-- Score distribution -->
+    <div class="chart-wrap">
+      <div class="chart-title">Score distribution</div>
+      <div class="chart-sub">How participants scored (0–8)</div>
+      <div class="dist-chart" id="dist-chart">
+        <div class="empty-state" style="padding:10px;">No data yet.</div>
+      </div>
+      <div id="dist-labels" style="display:flex; gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- All scores table -->
+  <div class="chart-wrap">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <div class="chart-title">All recorded scores</div>
+      <span id="table-count" class="badge badge-muted">0 records</span>
+    </div>
+    <div class="chart-sub">Individual quiz submissions — stored in browser localStorage</div>
+    <div class="scores-table-wrap">
+      <table class="data-table" id="scores-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name / ID</th>
+            <th>Score</th>
+            <th>Percentage</th>
+            <th>Result</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="scores-tbody">
+          <tr><td colspan="6" class="empty-state"><span class="empty-icon">&#128202;</span>No scores recorded yet. <a href="quiz.html" style="color:var(--brand);">Take the quiz</a> to start.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KPI Targets -->
+  <div class="chart-wrap">
+    <div class="chart-title">KPI targets vs. actuals</div>
+    <div class="chart-sub">Program targets set for the 12-month campaign</div>
+    <div class="bar-chart" id="target-bars" style="gap:14px;">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+</div>
+
+<div class="pg-footer">
+  <strong>PhishGuard 2026</strong> · George Brown Polytechnic · COMP 4066 Group 2 ·
+  <a href="mailto:security@georgebrown.ca" style="color:var(--brand); text-decoration:none;">security@georgebrown.ca</a>
+</div>
+
+<script>
+const STORAGE_KEY = "phishguard_scores";
+const TOPICS = [
+  "Sender identification",
+  "Urgency & pressure tactics",
+  "Link inspection",
+  "Business email compromise",
+  "Credential phishing",
+  "Attachment safety",
+  "Reporting procedures",
+  "Simulation awareness"
+];
+
+function getScores() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function loadDashboard() {
+  const scores = getScores();
+  const n = scores.length;
+
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  document.getElementById('kpi-total').textContent = n;
+  document.getElementById('table-count').textContent = n + ' record' + (n !== 1 ? 's' : '');
+
+  if (n === 0) {
+    document.getElementById('kpi-avg').textContent = '—';
+    document.getElementById('kpi-pass').textContent = '—';
+    document.getElementById('kpi-weak').textContent = '—';
+    renderTargetBars(0, 0);
+    return;
+  }
+
+  const avg = scores.reduce((a,b) => a + b.score, 0) / n;
+  const avgPct = Math.round((avg / 8) * 100);
+  document.getElementById('kpi-avg').textContent = avg.toFixed(1) + '/8';
+  document.getElementById('kpi-avg-sub').textContent = avgPct + '% average';
+
+  const passing = scores.filter(s => s.pct >= 75).length;
+  const passRate = Math.round((passing / n) * 100);
+  document.getElementById('kpi-pass').textContent = passRate + '%';
+
+  // Topic performance — we derive from stored scores (full breakdown not stored, so we track via localStorage)
+  const topicData = loadTopicData();
+  renderTopicBars(topicData);
+
+  // Score distribution
+  const dist = Array(9).fill(0);
+  scores.forEach(s => { if (s.score >= 0 && s.score <= 8) dist[s.score]++; });
+  renderDist(dist, n);
+
+  // Weakest topic
+  if (topicData.length > 0) {
+    const weakest = topicData.reduce((a,b) => a.pct < b.pct ? a : b);
+    document.getElementById('kpi-weak').textContent = weakest.pct < 80 ? weakest.topic : 'All topics strong!';
+  }
+
+  // Table
+  const tbody = document.getElementById('scores-tbody');
+  tbody.innerHTML = scores.slice(0, 50).map((s, i) => {
+    const pass = s.pct >= 75;
+    return `<tr>
+      <td style="color:var(--text-muted)">${i+1}</td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.score}/${s.total}</td>
+      <td>${s.pct}%</td>
+      <td><span class="badge ${pass ? 'badge-success' : 'badge-danger'}">${pass ? 'Pass' : 'Review'}</span></td>
+      <td style="color:var(--text-muted)">${s.date}</td>
+    </tr>`;
+  }).join('');
+
+  renderTargetBars(passRate, avgPct);
+}
+
+function loadTopicData() {
+  try {
+    const raw = localStorage.getItem('phishguard_topic_data');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function renderTopicBars(data) {
+  const el = document.getElementById('topic-bars');
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128202;</span>No topic data yet.<br>Take the <a href="quiz.html" style="color:var(--brand);">quiz</a> to start tracking.</div>';
+    return;
+  }
+  el.innerHTML = data.map(d => {
+    const cls = d.pct >= 80 ? 'success' : d.pct >= 60 ? '' : 'danger';
+    return `<div class="bar-row">
+      <span class="bar-label">${d.topic}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:${d.pct}%"></div></div>
+      <span class="bar-pct">${d.pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDist(dist, total) {
+  const max = Math.max(...dist, 1);
+  const chartEl = document.getElementById('dist-chart');
+  const labelEl = document.getElementById('dist-labels');
+  if (total === 0) { chartEl.innerHTML = '<div style="padding:20px; color:var(--text-muted); font-size:13px;">No data yet.</div>'; return; }
+  chartEl.innerHTML = dist.map((cnt, score) => {
+    const h = Math.round((cnt / max) * 90);
+    const cls = score >= 6 ? 'success' : score >= 4 ? '' : 'danger';
+    return `<div class="dist-bar-wrap">
+      <span class="dist-count">${cnt > 0 ? cnt : ''}</span>
+      <div class="dist-bar ${cls}" style="height:${h}px; background:${score >= 6 ? '#16a34a' : score >= 4 ? '#4169E1' : '#dc2626'}"></div>
+    </div>`;
+  }).join('');
+  labelEl.innerHTML = dist.map((_,i) => `<div style="flex:1; text-align:center; font-size:11px; color:var(--text-muted)">${i}</div>`).join('');
+}
+
+function renderTargetBars(passRate, avgPct) {
+  const targets = [
+    { label: 'Quiz completion rate', target: 70, actual: Math.min(100, Math.round(document.getElementById('kpi-total').textContent / 5 * 100)), unit: '%', note: 'Target: 70% of staff/faculty' },
+    { label: 'Pass rate (score ≥75%)', target: 75, actual: passRate, unit: '%', note: 'Target: 75% of participants' },
+    { label: 'Average score', target: 75, actual: avgPct, unit: '%', note: 'Target: 75% average (6/8)' },
+    { label: 'Simulation click-through (lower = better)', target: 10, actual: 0, unit: '%', note: 'Target: <10% click-through rate (requires simulation deployment)' }
+  ];
+  document.getElementById('target-bars').innerHTML = targets.map(t => {
+    const met = t.label.includes('lower') ? t.actual <= t.target : t.actual >= t.target;
+    const cls = t.actual === 0 ? '' : met ? 'success' : 'warning';
+    const display = t.actual === 0 ? 'Pending' : t.actual + t.unit;
+    return `<div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <span style="font-size:13px; font-weight:500; color:var(--text-primary)">${t.label}</span>
+        <span style="font-size:12px; color:var(--text-muted)">${t.note}</span>
+      </div>
+      <div class="bar-row" style="margin-bottom:0;">
+        <div class="bar-track" style="position:relative; height:22px;">
+          <div class="bar-fill ${cls}" style="width:${Math.min(100, t.actual)}%; height:100%"></div>
+          <div style="position:absolute; left:${t.target}%; top:0; bottom:0; width:2px; background:rgba(0,0,0,0.2); z-index:1;"></div>
+        </div>
+        <span class="bar-pct" style="font-size:13px;">${display}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportCSV() {
+  const scores = getScores();
+  if (scores.length === 0) { alert('No scores to export yet.'); return; }
+  const header = 'Name,Score,Total,Percentage,Result,Date\n';
+  const rows = scores.map(s => `"${s.name}",${s.score},${s.total},${s.pct}%,${s.pct >= 75 ? 'Pass' : 'Review'},${s.date}`).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'PhishGuard_Scores_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// Intercept quiz completions from quiz.html to store topic data
+// We store topic performance in a separate key during quiz saves
+const origSave = localStorage.getItem.bind(localStorage);
+window.addEventListener('storage', () => loadDashboard());
+
+loadDashboard();
+</script>
+</body>
+</html>
