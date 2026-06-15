@@ -4,7 +4,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand: #1d40a8;
+  --brand: #005ba4;
   --brand-dark: #3358c4;
   --brand-light: #EEF2FF;
   --brand-muted: #C7D2F8;
@@ -81,9 +81,9 @@ body {
   background: rgba(255,255,255,0.2);
   color: #fff;
   font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 99px;
-  margin-left: auto;
+  /* padding: 2px 8px; */
+  /* border-radius: 99px; */
+  /* margin-left: auto; */
   line-height: 0;
 }
 .pg-nav-badge img {
